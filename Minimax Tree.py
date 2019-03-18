@@ -1,4 +1,4 @@
-import NeuralNet as Net
+import GameNetwork as Net
 
 BLACK = 0
 WHITE = 1
