@@ -1,4 +1,5 @@
 import GameNetwork as Net
+import random as rand
 from BoardGame import GameBoard
 
 BLACK = 0
@@ -52,7 +53,7 @@ def pickmove(board):
     return currentpick
 
 
-def findmoves(board):
+'''def findmoves(board):
     if board.CurrentTurn == BLACK:
         pieces = board.BlackPieces
     else:
@@ -77,7 +78,7 @@ def findmoves(board):
             moves.append(Move(p.X, p.Y, p.X + right, p.Y))
             right += 1
 
-    return moves
+    return moves'''''
 
 
 class Move:
@@ -86,5 +87,37 @@ class Move:
         self.fromY = fromY
         self.toX = toX
         self.toY = toY
+
     def __str__(self):
         return str((self.fromX, self.fromY, self.toX, self.toY))
+
+
+def findmoves(board):
+    if board.currentTurn == BLACK:
+        pieces = board.BlackPieces
+    else:
+        pieces = board.WhitePieces
+
+    quota = 6
+    directions = ['up', 'down', 'left', 'right']
+    moves = []
+    while quota > 0:
+        p = rand.choice(pieces)
+        dir = rand.choice(directions)
+        if dir == 'up':
+            n = rand.randInt(0, p.Y)
+            temp = Move(p.X, p.Y, p.X, n)
+        elif dir == 'down':
+            n = rand.randInt(p.Y, 7)
+            temp = Move(p.X, p.Y, p.X, n)
+        elif dir == 'left':
+            n = rand.randInt(0, p.X)
+            temp = Move(p.X, p.Y, n, p.Y)
+        else:
+            n = rand.randInt(p.X, 7)
+            temp = Move(p.X, p.Y, n, p.Y)
+
+        if board.IsValidMove(temp.fromX, temp.fromY, temp.toX, temp.toY):
+            moves.append(temp)
+            quota -= 1
+    return moves

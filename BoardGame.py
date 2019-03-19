@@ -51,7 +51,7 @@ class GameBoard:
         self.Board = board
         self.BlackPieces = self.Pieces[:8]
         self.WhiteKing = self.Pieces[8]
-        self.WhitePieces = self.Pieces[-5:]
+        self.WhitePieces = self.Pieces[-5:]f
 
     def copy(self):
         ret = GameBoard()
