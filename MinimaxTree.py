@@ -103,14 +103,14 @@ def findmoves(board):
     moves = []
     while quota > 0:
         p = rand.choice(pieces)
-        dir = rand.choice(directions)
-        if dir == 'up':
+        d = rand.choice(directions)
+        if d == 'up':
             n = rand.randInt(0, p.Y)
             temp = Move(p.X, p.Y, p.X, n)
-        elif dir == 'down':
+        elif d == 'down':
             n = rand.randInt(p.Y, 7)
             temp = Move(p.X, p.Y, p.X, n)
-        elif dir == 'left':
+        elif d == 'left':
             n = rand.randInt(0, p.X)
             temp = Move(p.X, p.Y, n, p.Y)
         else:
