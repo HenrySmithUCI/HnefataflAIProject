@@ -3,7 +3,7 @@ WHITE = 1
 
 
 class Piece:
-    def __init__(self, game, team, posX, posY, isKing=False):
+    def __init__(self, game, team, posX, posY, isKing=False, alive = True):
         self.Game = game
         self.Team = team
         self.X = posX
@@ -13,39 +13,57 @@ class Piece:
 
 
 class GameBoard:
-    def __init__(self):
+    def __init__(self, copy = None):
         board = []
 
         for x in range(7):
             board.append([])
             for y in range(7):
                 board[x].append(None)
+        
+        if(copy == None):
+            self.CurrentTurn = BLACK
+            self.Pieces = [
+                Piece(self, BLACK, 3, 0),
+                Piece(self, BLACK, 3, 1),
+                Piece(self, BLACK, 0, 3),
+                Piece(self, BLACK, 1, 3),
+                Piece(self, BLACK, 3, 5),
+                Piece(self, BLACK, 3, 6),
+                Piece(self, BLACK, 5, 3),
+                Piece(self, BLACK, 6, 3),
 
-        pieces = [
-            Piece(self, BLACK, 3, 0),
-            Piece(self, BLACK, 3, 1),
-            Piece(self, BLACK, 0, 3),
-            Piece(self, BLACK, 1, 3),
-            Piece(self, BLACK, 3, 5),
-            Piece(self, BLACK, 3, 6),
-            Piece(self, BLACK, 5, 3),
-            Piece(self, BLACK, 6, 3),
-
-            Piece(self, WHITE, 3, 3, True),
-            Piece(self, WHITE, 3, 2),
-            Piece(self, WHITE, 3, 4),
-            Piece(self, WHITE, 2, 3),
-            Piece(self, WHITE, 4, 3)
-        ]
-
-        for p in pieces:
+                Piece(self, WHITE, 3, 3, True),
+                Piece(self, WHITE, 3, 2),
+                Piece(self, WHITE, 3, 4),
+                Piece(self, WHITE, 2, 3),
+                Piece(self, WHITE, 4, 3)
+            ]
+        else:
+            self.CurrentTurn = copy.CurrentTurn
+            self.Pieces = []
+            for p in copy.Pieces:
+                self.Pieces.append(Piece(self, p.Team, p.X, p.Y, p.IsKing, p.Alive))
+            
+        for p in self.Pieces:
             board[p.X][p.Y] = p
 
         self.Board = board
-        self.CurrentTurn = BLACK
-        self.BlackPieces = pieces[:8]
-        self.WhiteKing = pieces[8]
-        self.WhitePieces = pieces[-4:]
+        self.BlackPieces = self.Pieces[:8]
+        self.WhiteKing = self.Pieces[8]
+        self.WhitePieces = self.Pieces[-5:]
+
+    def copy(self):
+        ret = GameBoard()
+        
+
+        ret.Board = []
+        for x in range(7):
+            ret.Board.append([])
+            for y in range(7):
+                board[x].append(None)
+        
+        return ret
 
     def __str__(self):
         s = "/ 0 1 2 3 4 5 6\n"
