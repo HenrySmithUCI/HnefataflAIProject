@@ -30,20 +30,27 @@ class GUI:
         self.bottomText = tk.StringVar()
         tk.Label(self.root, textvariable = self.bottomText, font = (None, 16, 'bold')).grid(column = 0, row = 1)
         self.colWidth = WIDTH / 7
+        self.root.bind("<ButtonRelease-1>", self.onClick)
         self.board = BoardGame.GameBoard()
         self.pieceSelected = None
         self.gameOver = False
         self.drawBoard()
         if self.player.get() != self.board.CurrentTurn:
             self.bottomText.set("Thinking...")
-            self.aiMove()
-        self.drawBoard()
-        self.bottomText.set("Select piece to move")
-        self.root.bind("<ButtonRelease-1>", self.onClick)
+            self.root.after(10, self.aiMove)
+        else:
+            self.bottomText.set("Select piece to move")
 
     def aiMove(self):
         move = MinimaxTree.pickmove(self.board)
         self.board.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
+        self.drawBoard()
+        winner = self.board.GetWinner()
+        if winner != None:
+            self.bottomText.set(("Black" if winner == BLACK else "White") + " wins.")
+            self.gameOver = True
+        else:
+            self.bottomText.set("Select piece to move")
     
     def drawBoard(self):
         self.canvas.delete("all")
@@ -90,14 +97,8 @@ class GUI:
                         self.gameOver = True
                     else:
                         self.bottomText.set("Thinking...")
-                        self.aiMove()
-                        self.drawBoard()
-                        winner = self.board.GetWinner()
-                        if winner != None:
-                            self.bottomText.set(("Black" if winner == BLACK else "White") + " wins.")
-                            self.gameOver = True
-                        else:
-                            self.bottomText.set("Select piece to move")
+                        self.root.after(10, self.aiMove)
+                        
 
 app = GUI()
 app.run()
