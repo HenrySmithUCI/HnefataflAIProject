@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 from urllib import request, parse
 import re
 import random
+from collections import defaultdict
 
 def getPage(url, params):
     data = parse.urlencode(params).encode()
@@ -82,6 +83,9 @@ class BoardState:
                           [0, 0, 0, 0, 0, 0, 0],
                           [0, 0, 0, 0, 0, 0, 0]]
 
+    def __hash__(self):
+        return hash(str(self.black) + str(self.white) + str(self.king))
+
     def __eq__(self, other):
         for l in [(self.black, other.black), (self.white, other.white), (self.king, other.king)]:
             for j in range(len(l[0])):
@@ -89,6 +93,22 @@ class BoardState:
                     if l[0][j][i] != l[1][j][i]:
                         return False
         return True
+
+    def rotate(self):
+        result = BoardState()
+        for p in [(self.black, result.black), (self.white, result.white), (self.king, result.king)]:
+            for j in range(7):
+                for i in range(7):
+                    p[1][j][i] = p[0][6-i][j]
+        return result
+
+    def flip(self):
+        result = BoardState()
+        for p in [(self.black, result.black), (self.white, result.white), (self.king, result.king)]:
+            for j in range(7):
+                for i in range(7):
+                    p[1][j][i] = p[0][j][6-i]
+        return result
 
     def applyMove(self, move):
         sj, si = move.start()
@@ -137,8 +157,8 @@ class BoardState:
 
 def analyzeGame(gamePage):
     lastState = BoardState()
-    boardStates = [lastState]
-    moveNums = [0]
+    boardStates = [lastState] * 8
+    moveNums = [0] * 8
     num = 0
     for tr in gamePage.find_all('tr'):
         row = tr.find_all('td', recursive=False)
@@ -168,8 +188,14 @@ def analyzeGame(gamePage):
                     break   #a player resigned
                 newState = BoardState(lastState)
                 lastState = newState.applyMove(Move('black' if i == 1 else 'white', moveMatch))
-                boardStates.append(newState)
-                moveNums.append(num)
+                lastRotation = newState
+                for i in range(2):
+                    for j in range(4):
+                        newRotation = lastRotation.rotate()
+                        boardStates.append(lastRotation)
+                        moveNums.append(num)
+                        lastRotation = newRotation
+                    lastRotation = lastRotation.flip()
     winPattern = re.compile("(?:(Black|White) won\.|(Draw)\.)")
     winMatch = re.match(winPattern, str(gamePage.find(string = winPattern)).strip())
     if not winMatch:
@@ -187,7 +213,7 @@ def main(numGames):
     values = {'mere' : '1', 'alias1' : '', 'alias2' : '', 'spiltype' : '51'}
     gameList = getPage(url, values)
     data = []
-    stateTable = []
+    stateTable = defaultdict(list)
     count = 0
     for table in gameList.body.find_all('table'):
         tds = table.find_all('td')
@@ -198,17 +224,10 @@ def main(numGames):
             for inp in tds[1].form.find_all('input'):
                 values[inp['name']] = inp['value']
             try:
+                print(count)
                 gameStates, stateValues = analyzeGame(getPage(url, values))
-                if len(stateTable) == 0:
-                    stateTable.append([gameStates.pop(0), [stateValues[0]]])
                 for (gameState, stateValue) in zip(gameStates, stateValues):
-                    found = False
-                    for (tableState, valueList) in stateTable:
-                        if gameState == tableState:
-                            valueList.append(stateValue)
-                            found = True
-                    if not found:
-                        stateTable.append([gameState, [stateValue]])
+                    stateTable[gameState].append(stateValue)
             except MoveException:
                 print("Exception on #:", count)
             if numGames > 0 and count >= numGames:
@@ -216,14 +235,14 @@ def main(numGames):
     inputs = open("inputs.txt", 'w')
     outputs = open("outputs.txt", 'w')
     readable = open("readable.txt", 'w')
-    stateTable.sort(key = lambda x: len(x[1]), reverse = True)
-    readable.write('\n'.join([str(s[0]) + str(sum(s[1]) / float(len(s[1]))) + ' (' + str(len(s[1])) + ')\n' + str(s[1]) + '\n\n' for s in stateTable]))
+    readable.write('\n'.join([str(s[0]) + str(sum(s[1]) / float(len(s[1]))) + ' (' + str(len(s[1])) + ')\n' + str(s[1]) + '\n\n' \
+                              for s in sorted(stateTable.items(), key = lambda x : len(x[1]), reverse = True)]))
     dataPoints = []
-    for (state, outcomes) in stateTable:
+    for (state, outcomes) in stateTable.items():
         avg = sum(outcomes) / float(len(outcomes))
         for i in range(len(outcomes)):
             dataPoints.append([state, avg])
     inputs.write('\n'.join([d[0].serialize() for d in dataPoints]))
     outputs.write('\n'.join([str(d[1]) for d in dataPoints]))
-                       
+             
 main(0)
