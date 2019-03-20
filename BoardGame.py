@@ -60,7 +60,7 @@ class GameBoard:
         self.Board = board
         self.BlackPieces = self.Pieces[:8]
         self.WhiteKing = self.Pieces[8]
-        self.WhitePieces = self.Pieces[-5:]f
+        self.WhitePieces = self.Pieces[-5:]
 
     def Undo(self):
         if(len(self.History) == 0):
@@ -107,7 +107,7 @@ class GameBoard:
 
     def IsValidMove(self, fromX, fromY, toX, toY, getReason = False):
         if(getReason == False):
-            return IsValidMove(fromX, fromY, toX, toY, True)[0]
+            return self.IsValidMove(fromX, fromY, toX, toY, True)[0]
 
         # Positions out of Bounds
         if (fromX < 0 or fromX > 6 or fromY < 0 or fromY > 6 or
@@ -224,7 +224,7 @@ class GameBoard:
 
         if ((kingX == 0 and kingY == 0) or
                 (kingX == 0 and kingY == 6) or
-                (kingX == 0 and kingY == 0) or
+                (kingX == 6 and kingY == 0) or
                 (kingX == 6 and kingY == 6)):
             return WHITE
 

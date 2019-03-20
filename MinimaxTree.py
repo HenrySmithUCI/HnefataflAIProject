@@ -93,7 +93,7 @@ class Move:
 
 
 def findmoves(board):
-    if board.currentTurn == BLACK:
+    if board.CurrentTurn == BLACK:
         pieces = board.BlackPieces
     else:
         pieces = board.WhitePieces
@@ -105,16 +105,16 @@ def findmoves(board):
         p = rand.choice(pieces)
         d = rand.choice(directions)
         if d == 'up':
-            n = rand.randInt(0, p.Y)
+            n = rand.randint(0, p.Y)
             temp = Move(p.X, p.Y, p.X, n)
         elif d == 'down':
-            n = rand.randInt(p.Y, 7)
+            n = rand.randint(p.Y, 7)
             temp = Move(p.X, p.Y, p.X, n)
         elif d == 'left':
-            n = rand.randInt(0, p.X)
+            n = rand.randint(0, p.X)
             temp = Move(p.X, p.Y, n, p.Y)
         else:
-            n = rand.randInt(p.X, 7)
+            n = rand.randint(p.X, 7)
             temp = Move(p.X, p.Y, n, p.Y)
 
         if board.IsValidMove(temp.fromX, temp.fromY, temp.toX, temp.toY):
