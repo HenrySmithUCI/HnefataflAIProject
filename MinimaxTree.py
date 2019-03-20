@@ -10,8 +10,8 @@ def alphabeta(board, move, maximize, alpha, beta, depthLeft):
     board = GameBoard(board)
     board.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
     winner = board.GetWinner()
-    if winner is not None:
-        return winner
+    if winner != None:
+        return 1 if winner == BLACK else -1
     if depthLeft == 0:
         return Net.Predict(board)
     moves = findmoves(board)
