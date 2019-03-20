@@ -67,13 +67,13 @@ class GameBoard:
             return
         move = self.History.pop()
         movedP = self.Board[move.toX][move.toY]
-        movedP.posX = move.fromX
-        movedP.posY = move.fromY
+        movedP.X = move.fromX
+        movedP.Y = move.fromY
         self.Board[move.toX][move.toY] = None
         self.Board[move.fromX][move.fromY] = movedP
         for p in move.piecesKilled:
             p.Alive = True
-            self.Board[p.PosX][p.PosY] = p
+            self.Board[p.X][p.Y] = p
         if (self.CurrentTurn == WHITE):
             self.CurrentTurn = BLACK
         elif (self.CurrentTurn == BLACK):
@@ -162,7 +162,7 @@ class GameBoard:
 
         return (True,"Move is Valid")
 
-    def MakeMove(self, fromX, fromY, toX, toY, check=True):
+    def MakeMove(self, fromX, fromY, toX, toY, check=False):
         if (check):
             if (not self.IsValidMove(fromX, fromY, toX, toY)):
                 return False
@@ -179,16 +179,39 @@ class GameBoard:
             toCap = (toX + pos[0], toY + pos[1])  # what is to be captured
             checkCap = (toX + pos[0] * 2, toY + pos[1] * 2)  # the piece on the other side of being capped
 
-            # No capturing against the center (The center itself can be captured though)
-            if (checkCap[0] == 3 and checkCap[1] == 3):
-                continue
-
             # if the cap or the check cap out of bounds
             if (toCap[0] < 0 or toCap[0] > 6 or toCap[1] < 0 or toCap[1] > 6 or
                     checkCap[0] < 0 or checkCap[0] > 6 or checkCap[1] < 0 or checkCap[1] > 6):
                 continue
 
             capP = self.Board[toCap[0]][toCap[1]]
+
+            #completely different rules if capP is the king and on certain spaces
+            if (fromP.Team == BLACK and capP == self.WhiteKing):
+                if((self.WhiteKing.X == 3 and self.WhiteKing.Y == 2) or \
+                   (self.WhiteKing.X == 3 and self.WhiteKing.Y == 4) or \
+                   (self.WhiteKing.X == 2 and self.WhiteKing.Y == 3) or \
+                   (self.WhiteKing.X == 4 and self.WhiteKing.Y == 3) or \
+                   (self.WhiteKing.X == 3 and self.WhiteKing.Y == 3)):
+                    #assume king is dead
+                    self.WhiteKing.Alive = False
+                    for pos2 in [(self.WhiteKing.X, self.WhiteKing.Y + 1),
+                                 (self.WhiteKing.X + 1, self.WhiteKing.Y),
+                                 (self.WhiteKing.X, self.WhiteKing.Y - 1),
+                                 (self.WhiteKing.X - 1, self.WhiteKing.Y)]:
+                        if((pos2[0] != 3 or pos2[1] != 3) and (self.Board[pos2[0]][pos2[1]] == None or self.Board[pos2[0]][pos2[1]].Team != BLACK)):
+                            #actually king is alive
+                            self.WhiteKing.Alive = True
+                            break
+                    if(self.WhiteKing.Alive == False):
+                        move.piecesKilled.append(self.WhiteKing)
+                    continue
+                         
+                    
+
+            # No capturing against the center (The center itself can be captured though)
+            if (checkCap[0] == 3 and checkCap[1] == 3):
+                continue
 
             # Corners count as valid check Pieces
             if ((checkCap[0] == 0 and checkCap[1] == 0) or
@@ -265,11 +288,13 @@ if __name__ == "__main__":
                 print("Error")
                 continue
 
-            if (g.IsValidMove(fromX, fromY, toX, toY)):
+            validMove = g.IsValidMove(fromX, fromY, toX, toY)
+
+            if (validMove[0]):
                 break
 
             print("Invalid Move!")
-            print(g.GetReasonInvalid(fromX, fromY, toX, toY))
+            print(validMove[1])
 
         if (i == "QUIT"):
             break
@@ -283,6 +308,7 @@ if __name__ == "__main__":
         if (winner != None):
             break
 
+    print(g)
     if (winner == WHITE):
         print("White Wins")
     elif (winner == BLACK):
