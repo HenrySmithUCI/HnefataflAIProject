@@ -1,11 +1,12 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn import model_selection
 
 def sigmoid(x, der = False):
   sig = 1. / (1. + np.exp(-np.clip(x, -700, 700))) #clipped to prevent overflow
   if der:
     return (sig * (1. - sig)) * 2.
-  return (sig * 2.) - 1.# Recentering so range is [-1, 1]
+  return (sig * 2.) - 1. # Recentering so range is [-1, 1]
 
 def NNFromFile(path = "Network.txt"):
   with open(path) as f:
@@ -18,11 +19,6 @@ def NNFromFile(path = "Network.txt"):
       ret.weights[l] = np.reshape(line, (shape[l+1], shape[l]))
   return ret
 
-'''
-def normalize(x, inv = False): #convert between [0, 1] to [-1, 1]
-  if(inv):
-    return (x / 2.
-'''
 class NN:
   def __init__(self, shape, activation = sigmoid):
     self.activation = activation
@@ -57,7 +53,7 @@ class NN:
     return ret
 
 def MSError(network, X, Y):
-  return np.sum(((Y - network.Forward(X))) ** 2) / X.shape[1] # 1/2 * sum(y_i^2)
+  return np.sum(((Y - network.Forward(X))) ** 2) / X.shape[1] # sum(y_i - y'_i^2)/n
 
 def deltaWeights(network, InputMatrix, OutputMatrix):
   forwardAll = network.ForwardAll(InputMatrix)
@@ -77,9 +73,24 @@ def UpdateWeights(network, deltas, coef = -0.0001):
   for l in range(len(network.weights)):
     network.weights[l] += deltas[l] * coef
 
-def TrainNew(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", hiddenLayerShape = [50,20], outputFile = "Network.txt", TrainCount = 10, StepSize = -0.0001):
-  Inputs = np.genfromtxt(InputsPath, delimiter = None)
-  Outputs = np.genfromtxt(OutputsPath, delimiter = None)
+Xtr = None
+Ytr = None
+Xte = None
+Yte = None
+network = None
+RecordX = []
+RecordY = []
+trainedCount = 0
+
+def TrainNew(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", hiddenLayerShape = [70,50], outputFile = "Network.txt", TrainCount = 10, StepSize = -0.0001):
+  global Xtr
+  global Ytr
+  global network
+  global trainedCount
+  if(type(Xtr) == type(None)):
+    Xtr = np.genfromtxt(InputsPath, delimiter = None)
+  if(type(Ytr) == type(None)):
+    Ytr = np.genfromtxt(OutputsPath, delimiter = None)
   
   def getColumnCount(array):
     try:
@@ -87,41 +98,70 @@ def TrainNew(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", hiddenLa
     except:
       return 1
     
-  iSize = getColumnCount(Inputs)
-  oSize = getColumnCount(Outputs)
+  iSize = getColumnCount(Xtr)
+  oSize = getColumnCount(Ytr)
 
-  Inputs = Inputs.T
-  Outputs = Outputs.T
+  Xtr = Xtr.T
+  Ytr = Ytr.T
   
   network = NN([iSize] + hiddenLayerShape + [oSize])
 
   for i in range(TrainCount):
-    deltas = deltaWeights(network, Inputs, Outputs)
+    deltas = deltaWeights(network, Xtr, Ytr)
     UpdateWeights(network, deltas, StepSize)
+
+  trainedCount += TrainCount
+  RecordX.append(trainedCount)
+  RecordY.append(Test())
 
   with open(outputFile, "w") as f:
     f.write(str(network))
 
 def TrainExisting(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", networkFile = "Network.txt", TrainCount = 10, StepSize = -0.0001):
-  Inputs = np.genfromtxt(InputsPath, delimiter = None).T
-  Outputs = np.genfromtxt(OutputsPath, delimiter = None).T
+  global Xtr
+  global Ytr
+  global network
+  global trainedCount
+  if(type(Xtr) == type(None)):
+    Xtr = np.genfromtxt(InputsPath, delimiter = None).T
+  if(type(Ytr) == type(None)):
+    Ytr = np.genfromtxt(OutputsPath, delimiter = None).T
 
-  network = NNFromFile(networkFile)
+  if(network == None):
+    network = NNFromFile(networkFile)
   
   for i in range(TrainCount):
-    deltas = deltaWeights(network, Inputs, Outputs)
+    deltas = deltaWeights(network, Xtr, Ytr)
     UpdateWeights(network, deltas, StepSize)
+
+  trainedCount += TrainCount
+  RecordX.append(trainedCount)
+  RecordY.append(Test())
 
   with open(networkFile, "w") as f:
     f.write(str(network))
 
 def Test(testInputs = "data/Xte.txt", testOutputs = "data/Yte.txt", networkFile = "Network.txt"):
-  Inputs = np.genfromtxt(testInputs, delimiter = None).T
-  Outputs = np.genfromtxt(testOutputs, delimiter = None).T
-  network = NNFromFile(networkFile)
-  return MSError(network, Inputs, Outputs)
+  global Xte
+  global Yte
+  global network
+  if(type(Xte) == type(None)):
+    Xte = np.genfromtxt(testInputs, delimiter = None).T
+  if(type(Yte) == type(None)):
+    Yte = np.genfromtxt(testOutputs, delimiter = None).T
+  if(network == None):
+    network = NNFromFile(networkFile)
+  return MSError(network, Xte, Yte)
+
+def display():
+  plt.plot(RecordX, RecordY)
+  plt.show()
 
 def splitData(InputsPath = "data/Inputs.txt", OutputsPath = "data/Outputs.txt", XtrFile = "data/Xtr.txt", XteFile = "data/Xte.txt", YtrFile = "data/Ytr.txt", YteFile = "data/Yte.txt"):
+  global Xtr
+  global Ytr
+  global Xte
+  global Yte
   Inputs = np.genfromtxt(InputsPath, delimiter = None)
   Outputs = np.genfromtxt(OutputsPath, delimiter = None)
   Xtr, Xte, Ytr, Yte = model_selection.train_test_split(Inputs, Outputs, test_size=0.25, shuffle = True)
@@ -141,3 +181,8 @@ def splitData(InputsPath = "data/Inputs.txt", OutputsPath = "data/Outputs.txt", 
   makeFile(XteFile, Xte)
   makeFile(YtrFile, Ytr)
   makeFile(YteFile, Yte)
+  
+  Xtr = Xtr.T
+  Ytr = Ytr.T
+  Xte = Xte.T
+  Yte = Yte.T

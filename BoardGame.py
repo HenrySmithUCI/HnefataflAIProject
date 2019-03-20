@@ -12,12 +12,12 @@ class Piece:
         self.Alive = True
 
 class Move:
-    def __init__(self, fromX, fromY, toX, toY, piecesKilled = []):
+    def __init__(self, fromX, fromY, toX, toY):
         self.fromX = fromX
         self.fromY = fromY
         self.toX = toX
         self.toY = toY
-        self.piecesKilled = piecesKilled
+        self.piecesKilled = []
 
 class GameBoard:
     def __init__(self, copy = None):
