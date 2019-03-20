@@ -9,3 +9,5 @@ while True:
     move = MinimaxTree.pickmove(b)
     b.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
     print(move)
+    if b.GetWinner() is not None:
+        break

@@ -1,6 +1,7 @@
 import GameNetwork as Net
 import random as rand
 from BoardGame import GameBoard
+import threading
 
 BLACK = 0
 WHITE = 1
@@ -34,9 +35,18 @@ def alphabeta(board, move, maximize, alpha, beta, depthLeft):
 
 
 def pickmove(board):
-    moves = findmoves(board)
-    currentpick = None
-    if(board.CurrentTurn == BLACK):
+    moves = findallmoves(board)
+    results = dict()
+    t1 = threading.Thread(target=evaluate, args=[board, moves[:len(moves)//2], results])
+    t2 = threading.Thread(target=evaluate, args=[board, moves[len(moves)//2:], results])
+
+    t1.start()
+    t2.start()
+
+    t1.join()
+    t2.join()
+    #evaluate(board, moves, results)
+    '''if(board.CurrentTurn == BLACK):
         val = -2
         for m in moves:
             temp = alphabeta(board, m, True, -2, 2, 3)
@@ -49,11 +59,19 @@ def pickmove(board):
             temp = alphabeta(board, m, False, -2, 2, 3)
             if temp < val:
                 val = temp
-                currentpick = m
-    return currentpick
+                currentpick = m'''
+    if board.CurrentTurn == BLACK:
+        return max(results, key=results.get)
+    else:
+        return min(results, key=results.get)
 
 
-'''def findmoves(board):
+def evaluate(board, moves, results):
+    for m in moves:
+        val = alphabeta(board, m, board.CurrentTurn, -2, 2, 3)
+        results.update({m: val})
+
+def findallmoves(board):
     if board.CurrentTurn == BLACK:
         pieces = board.BlackPieces
     else:
@@ -78,7 +96,7 @@ def pickmove(board):
             moves.append(Move(p.X, p.Y, p.X + right, p.Y))
             right += 1
 
-    return moves'''''
+    return moves
 
 
 class Move:
