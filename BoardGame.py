@@ -122,7 +122,7 @@ class GameBoard:
             return (False,"Either from is empty or to is not")
 
         # Cannot move to the center
-        if toX == 3 and toY == 3:
+        if toX == 3 and toY == 3 and not fromP.IsKing:
             return (False,"Cannot move to the center")
 
         # Wrong Piece Moving
@@ -208,19 +208,21 @@ class GameBoard:
                     continue
                          
                     
+            checkP = None
 
-            # No capturing against the center (The center itself can be captured though)
-            if (checkCap[0] == 3 and checkCap[1] == 3):
-                continue
-
-            # Corners count as valid check Pieces
-            if ((checkCap[0] == 0 and checkCap[1] == 0) or
-                    (checkCap[0] == 0 and checkCap[1] == 6) or
-                    (checkCap[0] == 6 and checkCap[1] == 0) or
-                    (checkCap[0] == 6 and checkCap[1] == 6)):
+            #the throne is hostile when empty
+            if (checkCap[0] == 3 and checkCap[1] == 3 and self.Board[checkCap[0]][checkCap[1]] == None):
                 checkP = Piece(self, fromP.Team, checkCap[0], checkCap[1])
-            else:
-                checkP = self.Board[checkCap[0]][checkCap[1]]
+            
+            if(checkP == None):
+                # Corners count as valid check Pieces
+                if ((checkCap[0] == 0 and checkCap[1] == 0) or
+                        (checkCap[0] == 0 and checkCap[1] == 6) or
+                        (checkCap[0] == 6 and checkCap[1] == 0) or
+                        (checkCap[0] == 6 and checkCap[1] == 6)):
+                    checkP = Piece(self, fromP.Team, checkCap[0], checkCap[1])
+                else:
+                    checkP = self.Board[checkCap[0]][checkCap[1]]
 
             # if there are no pieces either to be capped or to cap with
             if (capP == None or checkP == None):
@@ -288,7 +290,7 @@ if __name__ == "__main__":
                 print("Error")
                 continue
 
-            validMove = g.IsValidMove(fromX, fromY, toX, toY)
+            validMove = g.IsValidMove(fromX, fromY, toX, toY, True)
 
             if (validMove[0]):
                 break
