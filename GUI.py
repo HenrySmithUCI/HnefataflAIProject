@@ -26,9 +26,11 @@ class GUI:
     def startGame(self):
         self.frame.destroy()
         self.canvas = tk.Canvas(self.root, height = HEIGHT, width = WIDTH, bg = 'antique white')
-        self.canvas.grid(column = 0, row = 0)
+        self.canvas.grid(column = 0, row = 0, columnspan = 3)
         self.bottomText = tk.StringVar()
-        tk.Label(self.root, textvariable = self.bottomText, font = (None, 16, 'bold')).grid(column = 0, row = 1)
+        tk.Label(self.root, textvariable = self.bottomText, font = (None, 16, 'bold')).grid(column = 1, row = 1)
+        self.backButton = tk.Button(self.root, text = "Undo", command = self.undoMove)
+        self.backButton.grid(column = 2, row = 1, sticky = tk.E)
         self.colWidth = WIDTH / 7
         self.root.bind("<ButtonRelease-1>", self.onClick)
         self.board = BoardGame.GameBoard()
@@ -42,21 +44,36 @@ class GUI:
             self.bottomText.set("Select piece to move")
 
     def aiMove(self):
+        self.backButton.config(state = tk.DISABLED)
         move = MinimaxTree.pickmove(self.board)
-        self.board.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
+        self.board.MakeMove(move.fromX, move.fromY, move.toX, move.toY, True)
         self.drawBoard()
+        self.backButton.config(state = tk.NORMAL)
         winner = self.board.GetWinner()
         if winner != None:
             self.bottomText.set(("Black" if winner == BLACK else "White") + " wins.")
             self.gameOver = True
         else:
             self.bottomText.set("Select piece to move")
+
+    def undoMove(self):
+        self.board.Undo()
+        self.board.Undo()
+        self.pieceSelected = None
+        self.gameOver = False
+        self.drawBoard()
+        self.bottomText.set("Select piece to move")
     
     def drawBoard(self):
         self.canvas.delete("all")
+        self.canvas.create_rectangle(0, 0, self.colWidth, self.colWidth, fill = 'burlywood', width = 0)
+        self.canvas.create_rectangle(WIDTH, 0, WIDTH - self.colWidth, self.colWidth, fill = 'burlywood', width = 0)
+        self.canvas.create_rectangle(WIDTH, HEIGHT, WIDTH - self.colWidth, HEIGHT - self.colWidth, fill = 'burlywood', width = 0)
+        self.canvas.create_rectangle(0, HEIGHT, self.colWidth, HEIGHT - self.colWidth, fill = 'burlywood', width = 0)
+        self.canvas.create_rectangle(self.colWidth * 3, self.colWidth * 3, self.colWidth * 4, self.colWidth * 4, fill = 'burlywood', width = 0)
         for i in range(7):
-            self.canvas.create_line(0, self.colWidth * (i + 1), WIDTH, self.colWidth * (i + 1))
-            self.canvas.create_line(self.colWidth * (i + 1), 0, self.colWidth * (i + 1), HEIGHT)
+            self.canvas.create_line(0, self.colWidth * i, WIDTH, self.colWidth * i)
+            self.canvas.create_line(self.colWidth * i, 0, self.colWidth * i, HEIGHT)
         for piece in self.board.Pieces:
             if piece.Alive:
                 x = self.colWidth * piece.X
@@ -78,17 +95,17 @@ class GUI:
     def handleClick(self, x, y):
         if not self.gameOver:
             if self.pieceSelected == None:
-                for piece in self.board.Pieces:
-                    if piece.Team == self.player.get() and piece.X == x and piece.Y == y:
-                        self.pieceSelected = [x, y]
-                        self.bottomText.set("Select destination")
-                        self.drawBoard()
+                piece = self.board.Board[x][y]
+                if piece != None and piece.Team == self.player.get():
+                    self.pieceSelected = [x, y]
+                    self.bottomText.set("Select destination")
+                    self.drawBoard()
             elif self.pieceSelected[0] == x and self.pieceSelected[1] == y:
                 self.pieceSelected = None
                 self.bottomText.set("Select piece to move")
                 self.drawBoard()
             else:
-                if self.board.MakeMove(self.pieceSelected[0], self.pieceSelected[1], x, y):
+                if self.board.MakeMove(self.pieceSelected[0], self.pieceSelected[1], x, y, True):
                     winner = self.board.GetWinner()
                     self.pieceSelected = None
                     self.drawBoard()
