@@ -114,8 +114,7 @@ def TrainNew(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", hiddenLa
   RecordX.append(trainedCount)
   RecordY.append(Test())
 
-  with open(outputFile, "w") as f:
-    f.write(str(network))
+  StoreNetwork(outputFile)
 
 def TrainExisting(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", networkFile = "Network.txt", TrainCount = 10, StepSize = -0.0001):
   global Xtr
@@ -138,8 +137,33 @@ def TrainExisting(InputsPath = "data/Xtr.txt", OutputsPath = "data/Ytr.txt", net
   RecordX.append(trainedCount)
   RecordY.append(Test())
 
-  with open(networkFile, "w") as f:
+  StoreNetwork(networkFile)
+
+def StoreNetwork(fileName):
+  global network
+  with open(fileName, "w") as f:
     f.write(str(network))
+
+def TrainFull(MakeNew = True):
+  eps = 0.000001
+  if(MakeNew):
+    TrainNew(TrainCount = 0)
+    prev = Test()
+    print(prev)
+    TrainExisting(TrainCount = 100)
+    current = Test()
+    print(current)
+  else:
+    prev = 10
+    current = Test()
+    print(current)
+  while(np.abs(prev - current) > eps):
+    StoreNetwork("OldNetwork.txt")
+    TrainExisting(StepSize = -current/1000)
+    prev = current
+    current = Test()
+    print(current)
+  display()
 
 def Test(testInputs = "data/Xte.txt", testOutputs = "data/Yte.txt", networkFile = "Network.txt"):
   global Xte
@@ -154,6 +178,9 @@ def Test(testInputs = "data/Xte.txt", testOutputs = "data/Yte.txt", networkFile 
   return MSError(network, Xte, Yte)
 
 def display():
+  with open("record.txt", "a") as f:
+    f.write(str(RecordX) + "\n")
+    f.write(str(RecordY) + "\n")
   plt.plot(RecordX, RecordY)
   plt.show()
 
