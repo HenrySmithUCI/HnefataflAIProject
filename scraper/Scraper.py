@@ -204,7 +204,7 @@ def analyzeGame(gamePage):
     winValue = 0
     if winMatch.group(1):
         winValue = (1 if winMatch.group(1) == "Black" else -1)
-    boardValues = [winValue / (num - sNum + 1.0) for sNum in moveNums]
+    boardValues = [winValue for sNum in moveNums]
     return boardStates, boardValues
                 
 
