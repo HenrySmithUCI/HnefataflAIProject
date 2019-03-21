@@ -42,38 +42,17 @@ def pickmove(board):
     moves = findmoves(board)
     results = dict()
 
-    n = len(moves) // 8
+    n = len(moves) // 8 if len(moves) >= 8 else len(moves)
     moves = [moves[i*n: (i + 1)*n] for i in range((len(moves) + n - 1) // n)]
     threads = []
+
     for i in range(8):
         threads.append(threading.Thread(target=evaluate, args=(board, moves[i], results)))
     for t in threads:
         t.start()
     for t in threads:
         t.join()
-    #t1 = threading.Thread(target=evaluate, args=(board, moves[:len(moves)//2], results))
-    #t2 = threading.Thread(target=evaluate, args=(board, moves[len(moves)//2:], results))
 
-    #t1.start()
-    #t2.start()
-
-    #t1.join()
-    #t2.join()
-    #evaluate(board, moves, results)
-    '''if(board.CurrentTurn == BLACK):
-        val = -2
-        for m in moves:
-            temp = alphabeta(board, m, True, -2, 2, 3)
-            if temp > val:
-                val = temp
-                currentpick = m
-    else:
-        val = 2
-        for m in moves:
-            temp = alphabeta(board, m, False, -2, 2, 3)
-            if temp < val:
-                val = temp
-                currentpick = m'''
     if board.CurrentTurn == BLACK:
         return max(results, key=results.get)
     else:
@@ -97,20 +76,24 @@ def findmoves(board):
     moves = []
     for p in pieces:
         up = 1
-        while board.IsValidMove(p.X, p.Y, p.X, p.Y + up):
-            moves.append(Move(p.X, p.Y, p.X, p.Y + up))
+        while CanKeepGoing(board, p.X, p.Y, p.X, p.Y + up):
+            if p.X != 3 or p.Y + up != 3:
+                moves.append(Move(p.X, p.Y, p.X, p.Y + up))
             up += 1
         down = 1
-        while board.IsValidMove(p.X, p.Y, p.X, p.Y - down):
-            moves.append(Move(p.X, p.Y, p.X, p.Y - down))
+        while CanKeepGoing(board, p.X, p.Y, p.X, p.Y - down):
+            if p.X != 3 or p.Y - down != 3:
+                moves.append(Move(p.X, p.Y, p.X, p.Y - down))
             down += 1
         left = 1
-        while board.IsValidMove(p.X, p.Y, p.X - left, p.Y):
-            moves.append(Move(p.X, p.Y, p.X - left, p.Y))
+        while CanKeepGoing(board, p.X, p.Y, p.X - left, p.Y):
+            if p.X - left != 3 or p.Y != 3:
+                moves.append(Move(p.X, p.Y, p.X - left, p.Y))
             left += 1
         right = 1
-        while board.IsValidMove(p.X, p.Y, p.X + right, p.Y):
-            moves.append(Move(p.X, p.Y, p.X + right, p.Y))
+        while CanKeepGoing(board, p.X, p.Y, p.X + right, p.Y):
+            if p.X + right != 3 or p.Y != 3:
+                moves.append(Move(p.X, p.Y, p.X + right, p.Y))
             right += 1
 
     return moves
@@ -126,6 +109,14 @@ class Move:
     def __str__(self):
         return str((self.fromX, self.fromY, self.toX, self.toY))
 
+
+def CanKeepGoing(board, fromX, fromY, toX, toY):
+    if board.IsValidMove(fromX, fromY, toX, toY):
+        return True
+    elif toX == 3 and toY == 3 and board.Board[3][3] is None:
+        return True
+    else:
+        return False
 
 '''def findmoves(board):
     if board.CurrentTurn == BLACK:
