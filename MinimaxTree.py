@@ -42,11 +42,12 @@ def pickmove(board):
     moves = findmoves(board)
     results = dict()
 
-    n = len(moves) // 8 if len(moves) >= 8 else len(moves)
+    m = len(moves)
+    n = m // 8 if m >= 8 else m
     moves = [moves[i*n: (i + 1)*n] for i in range((len(moves) + n - 1) // n)]
     threads = []
 
-    for i in range(8):
+    for i in range(8 if m >= 8 else m):
         threads.append(threading.Thread(target=evaluate, args=(board, moves[i], results)))
     for t in threads:
         t.start()
