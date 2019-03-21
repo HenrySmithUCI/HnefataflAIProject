@@ -13,7 +13,7 @@ def alphabeta(board, move, maximize, alpha, beta, depthLeft):
     winner = board.GetWinner()
     if winner != None:
         board.Undo()
-        return 1 if winner == BLACK else -1
+        return -1 if (winner == WHITE) else 1
     if depthLeft == 0:
         board.Undo()
         return Net.Predict(board)
@@ -43,8 +43,8 @@ def pickmove(board):
     results = dict()
 
     m = len(moves)
-    n = m // 8 if m >= 8 else m
-    moves = [moves[i*n: (i + 1)*n] for i in range((len(moves) + n - 1) // n)]
+    n = m // 8 if m >= 8 else 1
+    moves = [moves[i*n: (i + 1)*n] for i in range((m + n - 1) // n)]
     threads = []
 
     for i in range(8 if m >= 8 else m):
