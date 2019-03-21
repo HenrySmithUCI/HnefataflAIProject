@@ -28,7 +28,7 @@ def InputFromBoardState(gameBoard):
         king += [0]
       else:
         black += [0]
-        white += [0]
+        white += [1]
         if y.IsKing:
           king += [1]
         else:
