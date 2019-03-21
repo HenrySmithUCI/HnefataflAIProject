@@ -7,39 +7,57 @@ BLACK = 0
 WHITE = 1
 
 
-def alphabeta(board, move, maximize, alpha, beta, depthLeft):
+def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4):
     #board = GameBoard(board)
-    board.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
     winner = board.GetWinner()
     if winner != None:
-        board.Undo()
-        return -1 if (winner == WHITE) else 1
+        return (-1 if (winner == WHITE) else 1), None, "Win condition"
     if depthLeft == 0:
-        ret = Net.Predict(board)
-        board.Undo()
-        return ret
+        return float(Net.Predict(board)), None, "Net prediction"
     moves = findmoves(board)
-    if maximize:
+    bMove = None
+    hist = 'depthLeft = ' + str(depthLeft) + '\n'
+    if board.CurrentTurn == BLACK:
+        hist += 'Black selecting from:\n'
         val = -2
+        bHist = ''
         for m in moves:
-            val = max(val, alphabeta(board, m, not maximize, alpha, beta, depthLeft - 1))
+            board.MakeMove(m.fromX, m.fromY, m.toX, m.toY)
+            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1)
+            hist += str(m) + ': ' + str(rVal) + '\n'
+            if rVal > val:
+                val = rVal
+                bHist = h
+                bMove = m
+            board.Undo()
             alpha = max(alpha, val)
             if alpha >= beta:
+                hist += 'pruned\n'
                 break
-        board.Undo()
-        return val
+        hist += "selected " + str(bMove) + ", " + str(val) + "\nHistory:\n" + bHist
+        return val, bMove, hist
     else:
+        hist += 'White selecting from:\n'
         val = 2
+        bHist = ''
         for m in moves:
-            val = min(val, alphabeta(board, m, not maximize, alpha, beta, depthLeft - 1))
+            board.MakeMove(m.fromX, m.fromY, m.toX, m.toY)
+            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1)
+            hist += str(m) + ': ' + str(rVal) + '\n'
+            if rVal < val:
+                val = rVal
+                bHist = h
+                bMove = m
+            board.Undo()
             beta = min(beta, val)
             if alpha >= beta:
+                hist += 'pruned\n'
                 break
-        board.Undo()
-        return val
+        hist += "selected " + str(bMove) + ", " + str(val) + "\nHistory:\n" + bHist
+        return val, bMove, hist
 
 
-def pickmove(board):
+def pickmove(board, depth = 3):
     allMoves = findmoves(board)
     results = dict()
 
@@ -53,26 +71,41 @@ def pickmove(board):
         moves.pop()
     threads = []
 
-    for i in range(len(moves)):
-        threads.append(threading.Thread(target=evaluate, args=(board, moves[i], results)))
+    for moveList in moves:
+        threads.append(threading.Thread(target=evaluate, args=(board, moveList, results, depth)))
     for t in threads:
         t.start()
     for t in threads:
         t.join()
 
     if board.CurrentTurn == BLACK:
-        return max(results, key=results.get)
+        for m in allMoves:
+            print(m)
+        ret = max(results, key=results.get)
+        for (k, v) in results.items():
+            print(k, v, sep = ": ")
+        print(ret, results[ret])
+        return ret
     else:
-        return min(results, key=results.get)
+        for m in allMoves:
+            print(m)
+        ret = min(results, key=results.get)
+        for (k, v) in results.items():
+            print(k, v, sep = ": ")
+        print(ret, results[ret])
+        return ret
 
 
-def evaluate(board, moves, results):
+def evaluate(board, moves, results, depth):
     #print(moves)
     #print(results)
     board = GameBoard(board)
     for m in moves:
-        val = alphabeta(board, m, not board.CurrentTurn, -2, 2, 3)
+        board.MakeMove(m.fromX, m.fromY, m.toX, m.toY)
+        val = alphabeta(board, True if board.CurrentTurn == BLACK else False, -2, 2, depth)
+        board.Undo()
         results.update({m: val})
+
 
 def findmoves(board):
     if board.CurrentTurn == BLACK:
