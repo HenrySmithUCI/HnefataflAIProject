@@ -8,12 +8,14 @@ WHITE = 1
 
 
 def alphabeta(board, move, maximize, alpha, beta, depthLeft):
-    board = GameBoard(board)
+    #board = GameBoard(board)
     board.MakeMove(move.fromX, move.fromY, move.toX, move.toY)
     winner = board.GetWinner()
     if winner != None:
+        board.Undo()
         return 1 if winner == BLACK else -1
     if depthLeft == 0:
+        board.Undo()
         return Net.Predict(board)
     moves = findmoves(board)
     if maximize:
@@ -23,6 +25,7 @@ def alphabeta(board, move, maximize, alpha, beta, depthLeft):
             alpha = max(alpha, val)
             if alpha >= beta:
                 break
+        board.Undo()
         return val
     else:
         val = 2
@@ -31,20 +34,31 @@ def alphabeta(board, move, maximize, alpha, beta, depthLeft):
             beta = min(beta, val)
             if alpha >= beta:
                 break
+        board.Undo()
         return val
 
 
 def pickmove(board):
-    moves = findallmoves(board)
+    moves = findmoves(board)
     results = dict()
-    t1 = threading.Thread(target=evaluate, args=[board, moves[:len(moves)//2], results])
-    t2 = threading.Thread(target=evaluate, args=[board, moves[len(moves)//2:], results])
 
-    t1.start()
-    t2.start()
+    n = len(moves) // 8
+    moves = [moves[i*n: (i + 1)*n] for i in range((len(moves) + n - 1) // n)]
+    threads = []
+    for i in range(8):
+        threads.append(threading.Thread(target=evaluate, args=(board, moves[i], results)))
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    #t1 = threading.Thread(target=evaluate, args=(board, moves[:len(moves)//2], results))
+    #t2 = threading.Thread(target=evaluate, args=(board, moves[len(moves)//2:], results))
 
-    t1.join()
-    t2.join()
+    #t1.start()
+    #t2.start()
+
+    #t1.join()
+    #t2.join()
     #evaluate(board, moves, results)
     '''if(board.CurrentTurn == BLACK):
         val = -2
@@ -67,11 +81,14 @@ def pickmove(board):
 
 
 def evaluate(board, moves, results):
+    #print(moves)
+    #print(results)
+    board = GameBoard(board)
     for m in moves:
         val = alphabeta(board, m, board.CurrentTurn, -2, 2, 3)
         results.update({m: val})
 
-def findallmoves(board):
+def findmoves(board):
     if board.CurrentTurn == BLACK:
         pieces = board.BlackPieces
     else:
@@ -110,13 +127,13 @@ class Move:
         return str((self.fromX, self.fromY, self.toX, self.toY))
 
 
-def findmoves(board):
+'''def findmoves(board):
     if board.CurrentTurn == BLACK:
         pieces = board.BlackPieces
     else:
         pieces = board.WhitePieces
 
-    quota = 6
+    quota = 16
     directions = ['up', 'down', 'left', 'right']
     moves = []
     while quota > 0:
@@ -138,4 +155,4 @@ def findmoves(board):
         if board.IsValidMove(temp.fromX, temp.fromY, temp.toX, temp.toY):
             moves.append(temp)
             quota -= 1
-    return moves
+    return moves'''
