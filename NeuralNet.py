@@ -145,7 +145,7 @@ def StoreNetwork(fileName):
     f.write(str(network))
 
 def TrainFull(MakeNew = True):
-  eps = 0.000001
+  eps = 0.00001
   if(MakeNew):
     TrainNew(TrainCount = 0)
     prev = Test()
