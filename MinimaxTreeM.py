@@ -1,19 +1,22 @@
 import GameNetwork as Net
 import random as rand
 from BoardGame import GameBoard
-import threading
+import random
 
 BLACK = 0
 WHITE = 1
 
 
-def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4):
+def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4, rand = False):
     #board = GameBoard(board)
     winner = board.GetWinner()
     if winner != None:
-        return (-1 if (winner == WHITE) else 1), None, "Win condition"
+        return (-1 if (winner == WHITE) else 1), None, "Win condition\n"
     if depthLeft == 0:
-        return float(Net.Predict(board)), None, "Net prediction"
+        if not rand:
+            return float(Net.Predict(board)), None, "Net prediction\n"
+        else:
+            return random.uniform(-1, 1), None, "Random heuristic\n"
     moves = findmoves(board)
     bMove = None
     hist = 'depthLeft = ' + str(depthLeft) + '\n'
@@ -23,7 +26,8 @@ def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4):
         bHist = ''
         for m in moves:
             board.MakeMove(m.fromX, m.fromY, m.toX, m.toY)
-            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1)
+            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1, rand)
+            rVal *= .99
             hist += str(m) + ': ' + str(rVal) + '\n'
             if rVal > val:
                 val = rVal
@@ -42,7 +46,8 @@ def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4):
         bHist = ''
         for m in moves:
             board.MakeMove(m.fromX, m.fromY, m.toX, m.toY)
-            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1)
+            rVal, _, h = alphabeta(board, alpha, beta, depthLeft - 1, rand)
+            rVal *= .99
             hist += str(m) + ': ' + str(rVal) + '\n'
             if rVal < val:
                 val = rVal
@@ -56,7 +61,7 @@ def alphabeta(board, alpha = -2, beta = 2, depthLeft = 4):
         hist += "selected " + str(bMove) + ", " + str(val) + "\nHistory:\n" + bHist
         return val, bMove, hist
 
-
+'''
 def pickmove(board, depth = 3):
     allMoves = findmoves(board)
     results = dict()
@@ -105,7 +110,7 @@ def evaluate(board, moves, results, depth):
         val = alphabeta(board, True if board.CurrentTurn == BLACK else False, -2, 2, depth)
         board.Undo()
         results.update({m: val})
-
+'''
 
 def findmoves(board):
     if board.CurrentTurn == BLACK:
